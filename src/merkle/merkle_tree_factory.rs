@@ -43,8 +43,6 @@ impl MerkleTreeFactory {
     }
 
     fn create_nodes(nodes: Vec<Rc<MerkleTree>>) -> Vec<Rc<MerkleTree>> {
-        // println!("Create_Nodes: {:#?}", nodes);
-        /* If odd, pop and add to next tree. */
         if nodes.len() == 1 {
             return nodes;
         }

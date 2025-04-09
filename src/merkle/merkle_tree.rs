@@ -15,8 +15,6 @@ pub enum MerkleDirection {
 }
 
 impl MerkleTree {
-    // Goes through the Merkle tree trying to find the element. If it can't find it, returns None.
-    // If it finds it, returns the child followed by it's parent.
     pub fn find(tree: Rc<MerkleTree>, hash: String) -> Option<Vec<Rc<MerkleTree>>> {
         if tree.hash == hash {
             return Some(vec![Rc::clone(&tree)]);
@@ -48,11 +46,6 @@ impl MerkleTree {
         }
     }
 
-    /*
-       Returns None if there is no valid proof.
-
-       Returns vector of (Left/Right, Hash)
-    */
     pub fn construct_proof(
         tree: Rc<MerkleTree>,
         hash: String,
