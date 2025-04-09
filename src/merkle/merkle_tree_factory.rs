@@ -5,12 +5,13 @@ use sha256::{digest, try_digest};
 
 use super::merkle_tree::MerkleTree;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MerkleLeaf {
     hash: String,
     data: Vec<u8>,
 }
 
+#[derive(Clone, Debug)]
 pub struct MerkleTreeFactory {
     leafs: Vec<Rc<MerkleLeaf>>,
 }
@@ -42,6 +43,7 @@ impl MerkleTreeFactory {
     }
 
     fn create_nodes(nodes: Vec<Rc<MerkleTree>>) -> Vec<Rc<MerkleTree>> {
+        // println!("Create_Nodes: {:#?}", nodes);
         /* If odd, pop and add to next tree. */
         if nodes.len() == 1 {
             return nodes;
@@ -64,7 +66,7 @@ impl MerkleTreeFactory {
             new_nodes.push(Rc::clone(remainder))
         }
 
-        return new_nodes;
+        MerkleTreeFactory::create_nodes(new_nodes)
     }
 
     pub fn create_tree(self) -> Rc<MerkleTree> {
@@ -98,5 +100,45 @@ impl MerkleTreeFactory {
         };
 
         root
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::rc::Rc;
+
+    use itertools::Itertools;
+
+    use crate::merkle::merkle_tree::MerkleTree;
+
+    use super::MerkleTreeFactory;
+
+    #[test]
+    fn test_find_element() {
+        let data = vec!["1", "2", "3", "4", "5", "6", "7", "8"]
+            .into_iter()
+            .map(|x| x.as_bytes().to_vec())
+            .collect_vec();
+
+        let factory = MerkleTreeFactory::new(data.clone());
+        let tree = factory.create_tree();
+        println!("Tree: {:#?}", tree);
+        let hash = sha256::digest("7".as_bytes().to_vec());
+        // let found = MerkleTree::find(tree, hash);
+        let proof = MerkleTree::construct_proof(Rc::clone(&tree), hash).unwrap_or_default();
+
+        let hashes = data
+            .clone()
+            .into_iter()
+            .map(|x| sha256::digest(x))
+            .collect_vec();
+        // println!("Data: {:#?}", hashes);
+
+        // println!("Found: {:#?}", proof);
+
+        let verified_hash = MerkleTree::verify_proof(proof);
+
+        println!("verified proof: {:#?}", verified_hash);
+        assert_eq!(verified_hash, Rc::clone(&tree).hash);
     }
 }

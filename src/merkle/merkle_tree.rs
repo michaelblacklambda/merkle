@@ -2,13 +2,13 @@ use std::{cmp::Ordering, rc::Rc};
 
 use itertools::Itertools;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MerkleTree {
     pub hash: String,
     pub children: Option<[Rc<MerkleTree>; 2]>,
 }
 
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Debug)]
 pub enum MerkleDirection {
     Left,
     Right,
@@ -78,5 +78,22 @@ impl MerkleTree {
 
         proof.insert(0, first_element);
         Some(proof)
+    }
+
+    pub fn verify_proof(proof: Vec<(MerkleDirection, String)>) -> String {
+        let mut proof_iter = proof.into_iter();
+        let mut current_hash = match proof_iter.next() {
+            Some(elem) => elem.1,
+            None => return String::new(),
+        };
+
+        for (direction, hash) in proof_iter {
+            current_hash = match direction {
+                MerkleDirection::Left => sha256::digest(hash + &current_hash),
+                MerkleDirection::Right => sha256::digest(current_hash + &hash),
+            }
+        }
+
+        return current_hash;
     }
 }
